@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CloudZero — AI Token Counter</title>
+<style>
+  /* Advanced Responsive Adjustments */
+  @media (max-width: 1024px) {
+    .container { padding: 20px; }
+    .grid-3 { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 768px) {
+    nav { padding: 0 20px; }
+    .nav-links { display: none; } /* Standard SaaS practice: hide desktop links on mobile */
+    
+    .hero { padding: 32px 16px; border-radius: 16px; }
+    .hero h1 { font-size: 26px; }
+    
+    .grid-3, .grid-2, .stat-grid, .conclusion-grid, .tip-grid { 
+      grid-template-columns: 1fr; 
+    }
+    
+    .card { padding: 20px; }
+    .stat-card { padding: 16px; }
+    
+    .budget-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .budget-input { width: 100% !important; }
+    
+    table { display: block; overflow-x: auto; white-space: nowrap; }
+    
+    .rate-banner { flex-direction: column; gap: 12px; align-items: flex-start; }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f4ff; color: #1a1a2e; transition: all 0.3s; }
+  body.dark { background: #0d1117; color: #e6edf3; }
+
+  nav {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    padding: 0 40px; height: 70px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.4);
+  }
+  .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .logo-icon {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: linear-gradient(135deg, #4f46e5, #059669);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; box-shadow: 0 4px 15px rgba(79,70,229,0.4);
+  }
+  .logo-title { color: white; font-weight: 800; font-size: 17px; }
+  .logo-sub { color: rgba(255,255,255,0.45); font-size: 11px; }
+  .nav-links { display: flex; gap: 4px; }
+  .nav-links a {
+    color: rgba(255,255,255,0.65); text-decoration: none;
+    padding: 9px 20px; border-radius: 10px; font-size: 14px; font-weight: 500;
+    border: 1px solid transparent; transition: all 0.25s;
+  }
+  .nav-links a.active, .nav-links a:hover {
+    color: white; background: rgba(255,255,255,0.12);
+    border-color: rgba(255,255,255,0.25);
+  }
+  .toggle-btn {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 999px; padding: 9px 22px; color: white;
+    cursor: pointer; font-size: 13px; font-weight: 600;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 36px 20px; }
+
+  .hero {
+    text-align: center; padding: 48px 20px 36px;
+    background: linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #7c3aed 100%);
+    border-radius: 24px; margin-bottom: 32px; color: white;
+    box-shadow: 0 8px 40px rgba(245,158,11,0.3);
+  }
+  .hero h1 { font-size: 34px; font-weight: 800; margin-bottom: 10px; }
+  .hero p { font-size: 16px; opacity: 0.9; max-width: 520px; margin: 0 auto; }
+  .hero-badge {
+    display: inline-block; background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3); border-radius: 999px;
+    padding: 5px 18px; font-size: 13px; font-weight: 600; margin-bottom: 18px;
+  }
+
+  .card {
+    background: white; border-radius: 20px;
+    padding: 28px 32px; margin-bottom: 24px;
+    box-shadow: 0 4px 24px rgba(79,70,229,0.07);
+    border: 1px solid rgba(79,70,229,0.1);
+    transition: all 0.3s;
+  }
+  body.dark .card { background: #161b22; border-color: #30363d; }
+  .card:hover { box-shadow: 0 8px 40px rgba(79,70,229,0.13); transform: translateY(-2px); }
+
+  .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+  .card-icon {
+    width: 42px; height: 42px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+  }
+  .card-title { font-size: 17px; font-weight: 700; color: #1a1a2e; }
+  body.dark .card-title { color: #e6edf3; }
+  .card-sub { font-size: 13px; color: #6b7280; margin-top: 2px; }
+
+  label { font-size: 13px; font-weight: 600; color: #4f46e5; display: block; margin-bottom: 6px; }
+  body.dark label { color: #818cf8; }
+
+  input, select, textarea {
+    width: 100%; padding: 12px 16px; border-radius: 12px;
+    border: 2px solid #e8ecff; font-size: 15px; outline: none;
+    background: #f8faff; color: #1a1a2e; transition: all 0.25s;
+    font-family: inherit;
+  }
+  body.dark input, body.dark select, body.dark textarea {
+    background: #0d1117; border-color: #30363d; color: #e6edf3;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: #4f46e5; background: white;
+    box-shadow: 0 0 0 4px rgba(79,70,229,0.1);
+  }
+  body.dark input:focus, body.dark textarea:focus { background: #161b22; }
+
+  .select-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .select-row label { margin: 0; white-space: nowrap; }
+  .select-row select { width: auto; min-width: 280px; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    border-radius: 18px; padding: 22px 18px; text-align: center;
+    border: 2px solid #e0e7ff; background: white;
+    transition: all 0.3s; box-shadow: 0 4px 16px rgba(79,70,229,0.06);
+  }
+  body.dark .stat-card { background: #161b22; border-color: #30363d; }
+  .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(79,70,229,0.15); }
+  .stat-icon { font-size: 24px; margin-bottom: 6px; }
+  .stat-label { font-size: 11px; color: #6b7280; margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 24px; font-weight: 800; color: #4f46e5; }
+  body.dark .stat-value { color: #818cf8; }
+  .stat-unit { font-size: 11px; color: #9ca3af; margin-top: 4px; }
+
+  .meter-track {
+    background: linear-gradient(to right, #f1f5f9, #e2e8f0);
+    border-radius: 999px; height: 32px; overflow: hidden; margin-bottom: 10px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+  }
+  body.dark .meter-track { background: #0d1117; }
+  .meter-bar {
+    height: 100%; border-radius: 999px; transition: width 0.6s ease, background 0.3s;
+    display: flex; align-items: center; justify-content: flex-end; padding-right: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .meter-bar span { font-size: 12px; color: white; font-weight: 700; letter-spacing: 0.3px; }
+  .meter-labels { display: flex; justify-content: space-between; font-size: 12px; color: #9ca3af; margin-top: 8px; }
+
+  .feedback-box {
+    padding: 16px 20px; border-radius: 12px; margin-top: 18px;
+    font-size: 14px; font-weight: 600; border: 1.5px solid;
+  }
+
+  .action-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; flex-wrap: wrap; gap: 8px; }
+  .char-count { font-size: 12px; color: #9ca3af; font-style: italic; }
+  .action-btns { display: flex; gap: 8px; }
+  .btn-clear {
+    padding: 8px 18px; border-radius: 10px; border: 2px solid #e2e8f0;
+    background: transparent; color: #6b7280; cursor: pointer; font-size: 13px; font-weight: 600;
+    transition: all 0.2s;
+  }
+  .btn-clear:hover { border-color: #ef4444; color: #ef4444; }
+  .btn-save {
+    padding: 8px 20px; border-radius: 10px; border: none;
+    background: linear-gradient(135deg,#4f46e5,#7c3aed); color: white;
+    cursor: pointer; font-size: 13px; font-weight: 700;
+    box-shadow: 0 4px 12px rgba(79,70,229,0.3); transition: all 0.2s;
+  }
+  .btn-save:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(79,70,229,0.4); }
+
+  .example-btns { display: flex; gap: 10px; margin-bottom: 16px; }
+  .ex-btn {
+    padding: 10px 24px; border-radius: 10px; border: none; cursor: pointer;
+    font-weight: 700; font-size: 14px; transition: all 0.2s;
+  }
+  .ex-btn.bad-active { background: linear-gradient(135deg,#fee2e2,#fecaca); color: #991b1b; box-shadow: 0 4px 12px rgba(239,68,68,0.25); }
+  .ex-btn.good-active { background: linear-gradient(135deg,#d1fae5,#a7f3d0); color: #065f46; box-shadow: 0 4px 12px rgba(5,150,105,0.25); }
+  .ex-btn.inactive { background: #f1f5f9; color: #9ca3af; }
+  body.dark .ex-btn.inactive { background: #21262d; color: #6b7280; }
+
+  .example-box {
+    padding: 20px; border-radius: 14px; font-size: 14px; line-height: 1.7;
+    border: 2px solid;
+  }
+  .example-box.bad { background: linear-gradient(135deg,#fef2f2,#fee2e2); border-color: #fecaca; color: #374151; }
+  .example-box.good { background: linear-gradient(135deg,#f0fdf4,#d1fae5); border-color: #bbf7d0; color: #374151; }
+  body.dark .example-box.bad { background: #2d1414; color: #fecaca; }
+  body.dark .example-box.good { background: #0f2e1f; color: #bbf7d0; }
+
+  .tip-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; }
+  .tip-card {
+    padding: 18px; background: linear-gradient(135deg,#f8faff,#eff6ff);
+    border-radius: 14px; border: 1.5px solid #e0e7ff;
+    display: flex; gap: 14px; align-items: flex-start; transition: all 0.3s;
+  }
+  body.dark .tip-card { background: #0d1117; border-color: #30363d; }
+  .tip-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(79,70,229,0.12); border-color: #4f46e5; }
+  .tip-icon { font-size: 28px; flex-shrink: 0; }
+  .tip-title { font-weight: 700; color: #4f46e5; font-size: 15px; margin-bottom: 5px; }
+  body.dark .tip-title { color: #818cf8; }
+  .tip-desc { font-size: 13px; color: #6b7280; line-height: 1.6; }
+
+  .history-item {
+    padding: 14px 18px; border-radius: 12px;
+    background: linear-gradient(135deg,#f8faff,#eff6ff);
+    border: 1.5px solid #e0e7ff; margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    transition: all 0.2s;
+  }
+  body.dark .history-item { background: #0d1117; border-color: #30363d; }
+  .history-item:hover { border-color: #4f46e5; transform: translateX(4px); }
+  .history-text { font-size: 13px; color: #1a1a2e; flex: 1; }
+  body.dark .history-text { color: #e6edf3; }
+  .history-meta { display: flex; gap: 14px; font-size: 12px; color: #6b7280; font-weight: 600; }
+  @media (max-width: 768px) {
+    .grid-3, .grid-2, .stat-grid, .conclusion-grid, .tip-grid { grid-template-columns: 1fr; }
+    .budget-row { flex-direction: column; align-items: flex-start; }
+    .nav-links { display: none; }
+    .rate-banner { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="index.html">
+    <div class="logo-icon" style="background: #0f172a; border: 1px solid #1e293b; box-shadow: 0 4px 10px rgba(0,0,0,0.15); font-size: 26px; font-weight: 300; color: #38bdf8; display: flex; align-items: center; justify-content: center;">∞</div>
+    <div><div class="logo-title" style="letter-spacing: -0.5px;">CloudZero</div><div class="logo-sub">Energy & Cost Analyzer</div></div>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">☁️ Cloud Cost</a>
+    <a href="tokens.html" class="active">⚡ Token Counter</a>
+    <a href="comparison.html">📊 Comparison</a>
+  </div>
+  <button class="toggle-btn" onclick="toggleDark()">🌙 Dark Mode</button>
+</nav>
+
+<div class="container">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-badge">🇮🇳 Real-time · Token · Energy · CO₂ · ₹ Cost</div>
+    <h1>⚡ AI Token Counter</h1>
+    <p>See how much energy your AI prompts consume. Optimize for cost and sustainability.</p>
+  </div>
+
+  <!-- Input Card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:linear-gradient(135deg,#fef3c7,#fde68a);">✍️</div>
+      <div>
+        <div class="card-title">Enter Your AI Prompt</div>
+        <div class="card-sub">Stats update automatically as you type</div>
+      </div>
+    </div>
+    <div class="select-row">
+      <label>🤖 Select Model:</label>
+      <select id="modelSelect" onchange="updateStats()">
+        <option value="large">Large Model (GPT-4 / Claude Opus)</option>
+        <option value="small">Small Model (GPT-3.5 / Claude Haiku)</option>
+      </select>
+    </div>
+    <textarea id="promptInput" rows="6" placeholder="Type or paste your AI prompt here... stats update in real-time!" oninput="updateStats()"></textarea>
+    <div class="action-row">
+      <span class="char-count" id="charCount">0 characters · updates in real-time</span>
+      <div class="action-btns">
+        <button class="btn-clear" onclick="clearPrompt()">🗑️ Clear</button>
+        <button class="btn-save" onclick="saveToHistory()">💾 Save to History</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stat-grid">
+    <div class="stat-card" id="card-tokens">
+      <div class="stat-icon">🔢</div>
+      <div class="stat-label">Tokens</div>
+      <div class="stat-value" id="stat-tokens">0</div>
+      <div class="stat-unit">estimated</div>
+    </div>
+    <div class="stat-card" id="card-energy">
+      <div class="stat-icon">⚡</div>
+      <div class="stat-label">Energy</div>
+      <div class="stat-value" id="stat-energy">0</div>
+      <div class="stat-unit">Wh (watt-hours)</div>
+    </div>
+    <div class="stat-card" id="card-co2">
+      <div class="stat-icon">🌿</div>
+      <div class="stat-label">CO₂ Emission</div>
+      <div class="stat-value" id="stat-co2">0</div>
+      <div class="stat-unit">grams of CO₂</div>
+    </div>
+    <div class="stat-card" id="card-cost">
+      <div class="stat-icon">💰</div>
+      <div class="stat-label">API Cost</div>
+      <div class="stat-value" id="stat-cost">₹0</div>
+      <div class="stat-unit">Indian Rupees</div>
+    </div>
+  </div>
+
+  <!-- Energy Meter -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);">🔋</div>
+      <div>
+        <div class="card-title">Energy Impact Meter</div>
+        <div class="card-sub">Live visualization of your prompt's energy consumption</div>
+      </div>
+    </div>
+    <div class="meter-track">
+      <div class="meter-bar" id="meterBar" style="width:5%;background:linear-gradient(135deg,#4ade80,#22c55e);">
+        <span id="meterLabel">Idle</span>
+      </div>
+    </div>
+    <div class="meter-labels">
+      <span>🟢 Low (&lt;100 tokens)</span>
+      <span>🟡 Medium (100–300)</span>
+      <span>🔴 High (&gt;300)</span>
+    </div>
+    <div class="feedback-box" id="feedbackBox" style="background:#f0fdf4;color:#065f46;border-color:#bbf7d0;">
+      ✅ Start typing to see your energy impact!
+    </div>
+  </div>
+
+  <!-- Bad vs Good -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:linear-gradient(135deg,#ede9fe,#ddd6fe);">📖</div>
+      <div>
+        <div class="card-title">Prompt Optimization Example</div>
+        <div class="card-sub">Compare inefficient vs optimized prompts</div>
+      </div>
+    </div>
+    <div class="example-btns">
+      <button class="ex-btn bad-active" id="btnBad" onclick="showExample('bad')">❌ Bad Prompt</button>
+      <button class="ex-btn inactive" id="btnGood" onclick="showExample('good')">✅ Good Prompt</button>
+    </div>
+    <div class="example-box bad" id="exampleBox">
+      Explain everything about Artificial Intelligence in great detail covering all topics including history, machine learning, deep learning, neural networks, NLP, computer vision, robotics, ethics, future of AI, and give examples for each topic in at least 2000 words.
+    </div>
+    <div style="margin-top:14px;display:flex;gap:20px;font-size:13px;font-weight:600;flex-wrap:wrap;" id="exampleStats">
+      <span id="exTokens" style="color:#991b1b;">~182 tokens</span>
+      <span style="color:#6b7280;" id="exEnergy">Energy: 0.0546 Wh · CO₂: 0.026g · Cost: ₹0.456</span>
+    </div>
+  </div>
+
+  <!-- Tips -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:linear-gradient(135deg,#fef3c7,#fde68a);">💡</div>
+      <div>
+        <div class="card-title">5 Optimization Strategies</div>
+        <div class="card-sub">Reduce cost and energy consumption of your AI calls</div>
+      </div>
+    </div>
+    <div class="tip-grid">
+      <div class="tip-card"><div class="tip-icon">🤏</div><div><div class="tip-title">Use Smaller Models</div><div class="tip-desc">GPT-3.5 uses 10× less energy than GPT-4 for simple tasks. Match model size to task complexity.</div></div></div>
+      <div class="tip-card"><div class="tip-icon">✂️</div><div><div class="tip-title">Reduce Prompt Size</div><div class="tip-desc">Remove filler words, redundant context and unnecessary instructions. Shorter = cheaper + greener.</div></div></div>
+      <div class="tip-card"><div class="tip-icon">💾</div><div><div class="tip-title">Cache Responses</div><div class="tip-desc">Store results of repeated queries. If 1000 users ask the same thing, compute once and cache it.</div></div></div>
+      <div class="tip-card"><div class="tip-icon">📦</div><div><div class="tip-title">Use Batching</div><div class="tip-desc">Group multiple API requests into a single batch call instead of individual requests in a loop.</div></div></div>
+      <div class="tip-card" style="grid-column: span 2;"><div class="tip-icon">🔁</div><div><div class="tip-title">Avoid Repeated API Calls</div><div class="tip-desc">Never call AI APIs inside loops. Process all data at once to minimize compute and energy usage.</div></div></div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="card" id="historyCard" style="display:none;">
+    <div class="card-header">
+      <div class="card-icon" style="background:linear-gradient(135deg,#e0e7ff,#c7d2fe);">📜</div>
+      <div>
+        <div class="card-title">Prompt History</div>
+        <div class="card-sub">Last 5 saved prompts</div>
+      </div>
+    </div>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<script>
+  const BAD = "Explain everything about Artificial Intelligence in great detail covering all topics including history, machine learning, deep learning, neural networks, NLP, computer vision, robotics, ethics, future of AI, and give examples for each topic in at least 2000 words.";
+  const GOOD = "Explain AI basics in 5 key points, keep it concise.";
+  let history = [];
+  let currentLiveRate = 83.5; // Default fallback
+
+  function estimateTokens(text) {
+    const words = text.trim().split(/\s+/).filter(Boolean).length;
+    return Math.round(words * 1.3);
+  }
+
+  function getEnergy(tokens, model) {
+    return (tokens * (model === 'large' ? 0.0003 : 0.00005)).toFixed(4);
+  }
+
+  function getCO2(tokens, model) {
+    return (parseFloat(getEnergy(tokens, model)) * 0.475).toFixed(4);
+  }
+
+  function getCost(tokens, model) {
+    const rateINR = model === 'large' ? (0.03 * currentLiveRate) : (0.002 * currentLiveRate);
+    return ((tokens / 1000) * rateINR).toFixed(3);
+  }
+
+  function getLevel(tokens) {
+    if (tokens === 0) return { level:'Idle', color:'linear-gradient(135deg,#94a3b8,#64748b)', width:'5%', bg:'#f1f5f9', textColor:'#475569', border:'#cbd5e1', msg:'✍️ Start typing to see your energy impact!' };
+    if (tokens < 100) return { level:'Low', color:'linear-gradient(135deg,#4ade80,#22c55e)', width:'25%', bg:'#f0fdf4', textColor:'#065f46', border:'#bbf7d0', msg:'✅ Great! Efficient prompt with low energy consumption.' };
+    if (tokens < 300) return { level:'Medium', color:'linear-gradient(135deg,#fbbf24,#f59e0b)', width:'60%', bg:'#fffbeb', textColor:'#92400e', border:'#fde68a', msg:'⚠️ Moderate energy. Consider shortening your prompt.' };
+    return { level:'High', color:'linear-gradient(135deg,#f87171,#ef4444)', width:'95%', bg:'#fef2f2', textColor:'#991b1b', border:'#fecaca', msg:'🚨 High energy! Use smaller model or split into shorter prompts.' };
+  }
+
+  function updateStats() {
+    const text = document.getElementById('promptInput').value;
+    const model = document.getElementById('modelSelect').value;
+    const tokens = estimateTokens(text);
+    const energy = getEnergy(tokens, model);
+    const co2 = getCO2(tokens, model);
+    const cost = getCost(tokens, model);
+    const level = getLevel(tokens);
+
+    document.getElementById('charCount').textContent = `${text.length} characters · updates in real-time`;
+    document.getElementById('stat-tokens').textContent = tokens;
+    document.getElementById('stat-energy').textContent = energy;
+    document.getElementById('stat-co2').textContent = co2;
+    document.getElementById('stat-cost').textContent = '₹' + cost;
+
+    ['card-tokens','card-energy','card-co2','card-cost'].forEach(id => {
+      document.getElementById(id).style.borderColor = level.border;
+    });
+
+    document.getElementById('meterBar').style.width = level.width;
+    document.getElementById('meterBar').style.background = level.color;
+    document.getElementById('meterLabel').textContent = level.level;
+
+    const fb = document.getElementById('feedbackBox');
+    fb.style.background = level.bg;
+    fb.style.color = level.textColor;
+    fb.style.borderColor = level.border;
+    fb.textContent = level.msg;
+  }
+
+  function showExample(type) {
+    const text = type === 'bad' ? BAD : GOOD;
+    const tokens = estimateTokens(text);
+    const energy = getEnergy(tokens, 'large');
+    const co2 = getCO2(tokens, 'large');
+    const cost = getCost(tokens, 'large');
+
+    const box = document.getElementById('exampleBox');
+    box.textContent = text;
+    box.className = `example-box ${type}`;
+
+    document.getElementById('exTokens').textContent = `~${tokens} tokens`;
+    document.getElementById('exTokens').style.color = type === 'bad' ? '#991b1b' : '#065f46';
+    document.getElementById('exEnergy').textContent = `Energy: ${energy} Wh · CO₂: ${co2}g · Cost: ₹${cost}`;
+
+    document.getElementById('btnBad').className = `ex-btn ${type==='bad' ? 'bad-active' : 'inactive'}`;
+    document.getElementById('btnGood').className = `ex-btn ${type==='good' ? 'good-active' : 'inactive'}`;
+  }
+
+  function saveToHistory() {
+    const text = document.getElementById('promptInput').value.trim();
+    const model = document.getElementById('modelSelect').value;
+    if (!text) { alert('Please type a prompt first!'); return; }
+    const tokens = estimateTokens(text);
+    history.unshift({
+      text: text.length > 70 ? text.slice(0,70)+'...' : text,
+      tokens,
+      energy: getEnergy(tokens, model),
+      cost: getCost(tokens, model),
+      time: new Date().toLocaleTimeString()
+    });
+    if (history.length > 5) history.pop();
+    document.getElementById('historyCard').style.display = 'block';
+    document.getElementById('historyList').innerHTML = history.map(h => `
+      <div class="history-item">
+        <span class="history-text">${h.text}</span>
+        <div class="history-meta">
+          <span>🔢 ${h.tokens}</span>
+          <span>⚡ ${h.energy}Wh</span>
+          <span>💰 ₹${h.cost}</span>
+          <span>🕐 ${h.time}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function clearPrompt() {
+    document.getElementById('promptInput').value = '';
+    updateStats();
+  }
+
+  function toggleDark() {
+    document.body.classList.toggle('dark');
+    const isDark = document.body.classList.contains('dark');
+    localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+    document.querySelector('.toggle-btn').textContent = isDark ? '☀️ Light' : '🌙 Dark';
+  }
+  
+  if (localStorage.getItem('darkMode') === 'enabled') {
+    document.body.classList.add('dark');
+    document.querySelector('.toggle-btn').textContent = '☀️ Light';
+  }
+async function syncLiveRate() {
+    try {
+      const response = await fetch('https://open.er-api.com/v6/latest/USD');
+      const data = await response.json();
+      if (data && data.rates && data.rates.INR) {
+        currentLiveRate = data.rates.INR;
+        updateStats(); // Recalculate with the live rate
+      }
+    } catch (error) {
+      console.log("Using fallback rate");
+    }
+  }
+
+  updateStats();
+  syncLiveRate();
+</script>
+</body>
+</html>

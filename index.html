@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CloudZero — Cloud Cost Calculator</title>
+<style>
+  /* Advanced Responsive Adjustments */
+  @media (max-width: 1024px) {
+    .container { padding: 20px; }
+    .grid-3 { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 768px) {
+    nav { padding: 0 20px; }
+    .nav-links { display: none; } /* Standard SaaS practice: hide desktop links on mobile */
+    
+    .hero { padding: 32px 16px; border-radius: 16px; }
+    .hero h1 { font-size: 26px; }
+    
+    .grid-3, .grid-2, .stat-grid, .conclusion-grid, .tip-grid { 
+      grid-template-columns: 1fr; 
+    }
+    
+    .card { padding: 20px; }
+    .stat-card { padding: 16px; }
+    
+    .budget-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .budget-input { width: 100% !important; }
+    
+    table { display: block; overflow-x: auto; white-space: nowrap; }
+    
+    .rate-banner { flex-direction: column; gap: 12px; align-items: flex-start; }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f4ff; color: #1a1a2e; transition: all 0.3s; }
+  body.dark { background: #0d1117; color: #e6edf3; }
+
+  nav {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    padding: 0 40px; height: 70px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.4);
+  }
+  .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .logo-icon {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: linear-gradient(135deg, #4f46e5, #059669);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; box-shadow: 0 4px 15px rgba(79,70,229,0.4);
+  }
+  .logo-title { color: white; font-weight: 800; font-size: 17px; letter-spacing: -0.3px; }
+  .logo-sub { color: rgba(255,255,255,0.45); font-size: 11px; }
+  .nav-links { display: flex; gap: 4px; }
+  .nav-links a {
+    color: rgba(255,255,255,0.65); text-decoration: none;
+    padding: 9px 20px; border-radius: 10px; font-size: 14px; font-weight: 500;
+    border: 1px solid transparent; transition: all 0.25s;
+  }
+  .nav-links a.active, .nav-links a:hover {
+    color: white; background: rgba(255,255,255,0.12);
+    border-color: rgba(255,255,255,0.25);
+  }
+  .toggle-btn {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 999px; padding: 9px 22px; color: white;
+    cursor: pointer; font-size: 13px; font-weight: 600;
+    transition: all 0.2s;
+  }
+  .toggle-btn:hover { background: rgba(255,255,255,0.18); }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 36px 20px; }
+
+  .hero {
+    text-align: center; padding: 48px 20px 36px;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #059669 100%);
+    border-radius: 24px; margin-bottom: 32px; color: white;
+    box-shadow: 0 8px 40px rgba(79,70,229,0.3);
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%);
+  }
+  .hero h1 { font-size: 34px; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.5px; }
+  .hero p { font-size: 16px; opacity: 0.85; max-width: 500px; margin: 0 auto; }
+  .hero-badge {
+    display: inline-block; background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3); border-radius: 999px;
+    padding: 5px 18px; font-size: 13px; font-weight: 600;
+    margin-bottom: 18px; backdrop-filter: blur(10px);
+  }
+
+  .card {
+    background: white; border-radius: 20px;
+    padding: 28px 32px; margin-bottom: 24px;
+    box-shadow: 0 4px 24px rgba(79,70,229,0.07);
+    border: 1px solid rgba(79,70,229,0.1);
+    transition: all 0.3s;
+  }
+  body.dark .card {
+    background: #161b22; border-color: #30363d;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
+  .card:hover { box-shadow: 0 8px 40px rgba(79,70,229,0.13); transform: translateY(-2px); }
+  body.dark .card:hover { box-shadow: 0 8px 40px rgba(0,0,0,0.4); }
+
+  .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+  .card-icon {
+    width: 42px; height: 42px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .card-title { font-size: 17px; font-weight: 700; color: #1a1a2e; }
+  body.dark .card-title { color: #e6edf3; }
+  .card-sub { font-size: 13px; color: #6b7280; margin-top: 2px; }
+
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
+
+  .input-group { display: flex; flex-direction: column; gap: 6px; }
+  .input-label {
+    font-size: 13px; font-weight: 600; color: #4f46e5;
+    display: flex; align-items: center; gap: 6px;
+  }
+  body.dark .input-label { color: #818cf8; }
+  input, select {
+    padding: 12px 16px; border-radius: 12px;
+    border: 2px solid #e8ecff; font-size: 15px; outline: none;
+    background: #f8faff; color: #1a1a2e; transition: all 0.25s;
+    font-family: inherit; width: 100%;
+  }
+  body.dark input, body.dark select {
+    background: #0d1117; border-color: #30363d; color: #e6edf3;
+  }
+  input:focus, select:focus {
+    border-color: #4f46e5; background: white;
+    box-shadow: 0 0 0 4px rgba(79,70,229,0.1);
+  }
+  body.dark input:focus, body.dark select:focus { background: #161b22; }
+  .input-hint { font-size: 12px; color: #9ca3af; font-style: italic; }
+  .formula-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg,#ede9fe,#e0e7ff);
+    border: 1px solid #c4b5fd; border-radius: 8px;
+    padding: 6px 12px; font-size: 12px; font-weight: 600; color: #5b21b6;
+    margin-top: 6px;
+  }
+  body.dark .formula-pill { background: #1e1b4b; border-color: #3730a3; color: #a5b4fc; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: white; border: none; border-radius: 12px;
+    padding: 14px 36px; font-size: 15px; font-weight: 700;
+    cursor: pointer; margin-top: 24px; transition: all 0.25s;
+    box-shadow: 0 4px 20px rgba(79,70,229,0.35);
+    letter-spacing: 0.3px;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(79,70,229,0.45); }
+  .btn:active { transform: translateY(0); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead tr { background: linear-gradient(135deg,#f0f4ff,#ede9fe); }
+  body.dark thead tr { background: linear-gradient(135deg,#1f2d3d,#1e1b4b); }
+  th {
+    padding: 14px 16px; text-align: left;
+    border-bottom: 2px solid #e0e7ff; font-weight: 700; font-size: 13px;
+    color: #4f46e5; letter-spacing: 0.3px;
+  }
+  body.dark th { border-color: #30363d; color: #818cf8; }
+  td { padding: 13px 16px; border-bottom: 1px solid #f0f4ff; font-size: 14px; }
+  body.dark td { border-color: #21262d; color: #e6edf3; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr { transition: background 0.15s; }
+  tbody tr:hover td { background: #f8faff; }
+  body.dark tbody tr:hover td { background: #1f2937; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    border-radius: 18px; padding: 22px 20px; text-align: center;
+    border: 2px solid; transition: all 0.3s; position: relative; overflow: hidden;
+  }
+  .stat-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: inherit; border-radius: 18px 18px 0 0;
+  }
+  .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.12); }
+  .stat-label { font-size: 12px; color: #6b7280; margin-bottom: 8px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 28px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.5px; }
+  .stat-unit { font-size: 12px; color: #9ca3af; font-weight: 500; }
+
+  .winner-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: linear-gradient(135deg,#059669,#047857);
+    color: white; padding: 4px 14px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; box-shadow: 0 2px 8px rgba(5,150,105,0.3);
+  }
+  .cheapest-banner {
+    background: linear-gradient(135deg,#ecfdf5,#d1fae5);
+    border: 2px solid #059669; border-radius: 16px;
+    padding: 18px 24px; margin-bottom: 24px;
+    display: flex; align-items: center; gap: 12px;
+    font-size: 15px; font-weight: 600; color: #065f46;
+    box-shadow: 0 4px 20px rgba(5,150,105,0.15);
+  }
+  body.dark .cheapest-banner { background: #063d28; border-color: #059669; color: #6ee7b7; }
+  .cheapest-icon { font-size: 28px; }
+
+  .budget-row { display: flex; align-items: center; gap: 16px; margin-top: 24px; flex-wrap: wrap; }
+  .budget-label { font-size: 13px; font-weight: 700; color: #4f46e5; white-space: nowrap; }
+  body.dark .budget-label { color: #818cf8; }
+  .budget-input { width: 200px !important; }
+  .budget-alert { font-size: 13px; font-weight: 700; color: #ef4444; display: flex; align-items: center; gap: 6px; }
+  .budget-ok { font-size: 13px; font-weight: 700; color: #059669; }
+
+  .rate-banner {
+    background: linear-gradient(135deg,#1a1a2e,#0f3460);
+    border-radius: 16px; padding: 18px 24px; margin-bottom: 24px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: gap;
+    gap: 16px;
+  }
+  .rate-text { color: white; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+  .rate-input {
+    width: 100px !important; display: inline-block !important;
+    background: rgba(255,255,255,0.1) !important; border-color: rgba(255,255,255,0.2) !important;
+    color: white !important; padding: 6px 12px !important; font-size: 15px !important;
+  }
+  .rate-note { color: rgba(255,255,255,0.45); font-size: 12px; margin-top: 2px; }
+
+  #result-section { display: none; }
+  .divider { height: 1px; background: linear-gradient(to right,transparent,#e0e7ff,transparent); margin: 8px 0 24px; }
+  body.dark .divider { background: linear-gradient(to right,transparent,#30363d,transparent); }
+
+  .chart-wrap { position: relative; }
+  @media (max-width: 768px) {
+    .grid-3, .grid-2, .stat-grid, .conclusion-grid, .tip-grid { grid-template-columns: 1fr; }
+    .budget-row { flex-direction: column; align-items: flex-start; }
+    .nav-links { display: none; }
+    .rate-banner { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a class="logo" href="index.html">
+    <div class="logo-icon" style="background: #0f172a; border: 1px solid #1e293b; box-shadow: 0 4px 10px rgba(0,0,0,0.15); font-size: 26px; font-weight: 300; color: #38bdf8; display: flex; align-items: center; justify-content: center;">∞</div>
+    <div><div class="logo-title" style="letter-spacing: -0.5px;">CloudZero</div><div class="logo-sub">Energy & Cost Analyzer</div></div>
+  </a>
+  <div class="nav-links">
+    <a href="index.html" class="active">☁️ Cloud Cost</a>
+    <a href="tokens.html">⚡ Token Counter</a>
+    <a href="comparison.html">📊 Comparison</a>
+  </div>
+  <button class="toggle-btn" onclick="toggleDark()">🌙 Dark Mode</button>
+</nav>
+
+<div class="container">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-badge">🇮🇳 Indian Rupee ₹ · Real-time</div>
+    <h1>☁️ Cloud Cost Calculator</h1>
+    <p>Compare AWS, Azure & GCP costs instantly in Indian Rupees. Enter your usage and see live results.</p>
+  </div>
+
+  <!-- Rate Banner -->
+  <div class="rate-banner">
+    <div>
+      <div class="rate-text">
+        💱 Exchange Rate: &nbsp;1 USD =
+        ₹<input type="number" id="inrRate" value="83.5" class="rate-input" oninput="calculate()"/>
+      </div>
+      <div class="rate-note">Update this if USD/INR rate changes</div>
+    </div>
+    <div style="color:rgba(255,255,255,0.7);font-size:13px;font-weight:600;">
+      All prices shown in <span style="color:#4ade80;font-size:16px;">₹ Indian Rupees</span>
+    </div>
+  </div>
+
+  <!-- Input Card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:linear-gradient(135deg,#ede9fe,#e0e7ff);">⚡</div>
+      <div>
+        <div class="card-title">Enter Your Cloud Usage</div>
+        <div class="card-sub">Results update automatically as you type</div>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="input-group">
+        <div class="input-label">🗄️ Storage (GB)</div>
+        <input type="number" id="storage" placeholder="e.g. 500" oninput="calculate()"/>
+        <div class="formula-pill">📐 Cost = GB × ₹/GB</div>
+        <div class="input-hint">Example: S3 bucket, Azure Blob, GCS</div>
+      </div>
+      <div class="input-group">
+        <div class="input-label">💻 Compute Hours</div>
+        <input type="number" id="compute" placeholder="e.g. 720" oninput="calculate()"/>
+        <div class="formula-pill">📐 Cost = Hours × ₹/hr</div>
+        <div class="input-hint">720 hrs = 1 VM running full month</div>
+      </div>
+      <div class="input-group">
+        <div class="input-label">🌐 Data Transfer (GB)</div>
+        <input type="number" id="transfer" placeholder="e.g. 100" oninput="calculate()"/>
+        <div class="formula-pill">📐 Cost = GB × ₹/GB</div>
+        <div class="input-hint">Outgoing internet traffic</div>
+      </div>
+    </div>
+    <div class="budget-row">
+      <span class="budget-label">🚨 Monthly Budget (₹):</span>
+      <input type="number" id="budget" placeholder="e.g. 50000" class="budget-input" oninput="calculate()"/>
+      <span id="budgetMsg"></span>
+    </div>
+  </div>
+
+  <!-- Pricing Reference -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);">📋</div>
+      <div>
+        <div class="card-title">Real Pricing Reference (USD → ₹)</div>
+        <div class="card-sub">Official pricing from AWS, Azure & GCP</div>
+      </div>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Provider</th>
+        <th>Storage (per GB)</th>
+        <th>Compute (per hour)</th>
+        <th>Transfer (per GB)</th>
+      </tr></thead>
+      <tbody id="priceTable">
+        <tr><td><strong style="color:#4f46e5;">AWS</strong></td><td id="p-aws-s">—</td><td id="p-aws-c">—</td><td id="p-aws-t">—</td></tr>
+        <tr><td><strong style="color:#3b82f6;">Azure</strong></td><td id="p-az-s">—</td><td id="p-az-c">—</td><td id="p-az-t">—</td></tr>
+        <tr><td><strong style="color:#059669;">GCP</strong></td><td id="p-gcp-s">—</td><td id="p-gcp-c">—</td><td id="p-gcp-t">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Results -->
+  <div id="result-section">
+    <div id="cheapestBanner" class="cheapest-banner">
+      <span class="cheapest-icon">🏆</span>
+      <span id="cheapestText"></span>
+    </div>
+
+    <div class="stat-grid" id="statCards"></div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:linear-gradient(135deg,#fef3c7,#fde68a);">💰</div>
+        <div>
+          <div class="card-title">Detailed Cost Breakdown</div>
+          <div class="card-sub">All amounts in Indian Rupees (₹)</div>
+        </div>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Provider</th><th>Storage</th><th>Compute</th><th>Transfer</th><th>Monthly Total</th>
+        </tr></thead>
+        <tbody id="resultBody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:linear-gradient(135deg,#e0e7ff,#ede9fe);">📊</div>
+        <div>
+          <div class="card-title">Visual Cost Comparison</div>
+          <div class="card-sub">Bar chart — Storage, Compute & Transfer breakdown</div>
+        </div>
+      </div>
+      <canvas id="barChart" height="90"></canvas>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const pricing = {
+    AWS:   { storage:0.023, compute:0.096, transfer:0.090 },
+    Azure: { storage:0.018, compute:0.085, transfer:0.087 },
+    GCP:   { storage:0.020, compute:0.048, transfer:0.080 },
+  };
+  const provColors = { AWS:'#4f46e5', Azure:'#3b82f6', GCP:'#059669' };
+  let barChart = null;
+
+  function getRate() { return parseFloat(document.getElementById('inrRate').value)||83.5; }
+  function fmt(n) { return '₹'+n.toLocaleString('en-IN',{maximumFractionDigits:2}); }
+
+  async function fetchLiveRate() {
+    try {
+      const response = await fetch('https://open.er-api.com/v6/latest/USD');
+      const data = await response.json();
+      if (data && data.rates && data.rates.INR) {
+        const liveRate = data.rates.INR.toFixed(2);
+        document.getElementById('inrRate').value = liveRate;
+        document.querySelector('.rate-note').innerHTML = "🟢 Live market rate synced automatically";
+        calculate(); // Force update the math with the new live rate
+      }
+    } catch (error) {
+      console.log("API failed, using fallback rate");
+      document.querySelector('.rate-note').innerHTML = "🔴 Offline mode: Using default rate";
+    }
+  }
+
+  function updatePriceTable() {
+    const r = getRate();
+    document.getElementById('p-aws-s').textContent  = fmt(pricing.AWS.storage*r)+'/GB';
+    document.getElementById('p-aws-c').textContent  = fmt(pricing.AWS.compute*r)+'/hr';
+    document.getElementById('p-aws-t').textContent  = fmt(pricing.AWS.transfer*r)+'/GB';
+    document.getElementById('p-az-s').textContent   = fmt(pricing.Azure.storage*r)+'/GB';
+    document.getElementById('p-az-c').textContent   = fmt(pricing.Azure.compute*r)+'/hr';
+    document.getElementById('p-az-t').textContent   = fmt(pricing.Azure.transfer*r)+'/GB';
+    document.getElementById('p-gcp-s').textContent  = fmt(pricing.GCP.storage*r)+'/GB';
+    document.getElementById('p-gcp-c').textContent  = fmt(pricing.GCP.compute*r)+'/hr';
+    document.getElementById('p-gcp-t').textContent  = fmt(pricing.GCP.transfer*r)+'/GB';
+  }
+
+  function calculate() {
+    updatePriceTable();
+    const s = parseFloat(document.getElementById('storage').value)||0;
+    const c = parseFloat(document.getElementById('compute').value)||0;
+    const t = parseFloat(document.getElementById('transfer').value)||0;
+    const budget = parseFloat(document.getElementById('budget').value)||0;
+    const r = getRate();
+
+    if (!s && !c && !t) { document.getElementById('result-section').style.display='none'; return; }
+    document.getElementById('result-section').style.display='block';
+
+    const results = Object.entries(pricing).map(([name,p])=>({
+      name,
+      storage:  Math.round(s*p.storage*r),
+      compute:  Math.round(c*p.compute*r),
+      transfer: Math.round(t*p.transfer*r),
+      total:    Math.round((s*p.storage+c*p.compute+t*p.transfer)*r),
+    }));
+
+    const cheapest = results.reduce((a,b)=>a.total<b.total?a:b);
+
+    // Budget
+    if (budget>0) {
+      const over = results.filter(r=>r.total>budget).map(r=>r.name);
+      const msgEl = document.getElementById('budgetMsg');
+      msgEl.innerHTML = over.length
+        ? `<span class="budget-alert">⚠️ ${over.join(', ')} exceed ₹${budget.toLocaleString('en-IN')}!</span>`
+        : `<span class="budget-ok">✅ All providers within budget!</span>`;
+    }
+
+    // Cheapest Banner
+    document.getElementById('cheapestText').innerHTML =
+      `Cheapest Option: <strong>${cheapest.name}</strong> at ${fmt(cheapest.total)}/month — saves ${fmt(Math.max(...results.map(r=>r.total)) - cheapest.total)} vs most expensive`;
+
+    // Stat Cards
+    document.getElementById('statCards').innerHTML = results.map(r=>`
+      <div class="stat-card" style="border-color:${provColors[r.name]};background:${r.name===cheapest.name?'linear-gradient(135deg,#ecfdf5,#f0fdf4)':'white'}">
+        <div class="stat-label">${r.name}</div>
+        <div class="stat-value" style="color:${provColors[r.name]}">${fmt(r.total)}</div>
+        <div class="stat-unit">${r.name===cheapest.name?'<span style="color:#059669;font-weight:700;">🏆 Cheapest</span>':'per month'}</div>
+      </div>
+    `).join('');
+
+    // Table
+    document.getElementById('resultBody').innerHTML = results.map(r=>`
+      <tr>
+        <td><strong style="color:${provColors[r.name]}">${r.name}</strong> ${r.name===cheapest.name?'<span class="winner-badge">🏆 Best</span>':''}</td>
+        <td>${fmt(r.storage)}</td>
+        <td>${fmt(r.compute)}</td>
+        <td>${fmt(r.transfer)}</td>
+        <td><strong style="color:${provColors[r.name]};font-size:15px;">${fmt(r.total)}</strong></td>
+      </tr>
+    `).join('');
+
+    // Bar Chart
+    if (barChart) barChart.destroy();
+    const isDark = document.body.classList.contains('dark');
+    const ctx = document.getElementById('barChart').getContext('2d');
+    barChart = new Chart(ctx,{
+      type:'bar',
+      data:{
+        labels: results.map(r=>r.name),
+        datasets:[
+          {label:'Storage',  data:results.map(r=>r.storage),  backgroundColor:'#818cf8',borderRadius:6},
+          {label:'Compute',  data:results.map(r=>r.compute),  backgroundColor:'#4f46e5',borderRadius:6},
+          {label:'Transfer', data:results.map(r=>r.transfer), backgroundColor:'#6ee7b7',borderRadius:6},
+        ],
+      },
+      options:{
+        responsive:true,
+        plugins:{legend:{position:'top'},tooltip:{callbacks:{label:ctx=>'₹'+ctx.raw.toLocaleString('en-IN')}}},
+        scales:{y:{ticks:{callback:v=>'₹'+(v/1000).toFixed(0)+'K'},grid:{color:isDark?'#21262d':'#f0f4ff'}}},
+      },
+    });
+  }
+
+  function toggleDark() {
+    document.body.classList.toggle('dark');
+    const isDark = document.body.classList.contains('dark');
+    localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+    document.querySelector('.toggle-btn').textContent = isDark ? '☀️ Light' : '🌙 Dark';
+    if (document.getElementById('result-section').style.display==='block') calculate();
+  }
+
+  if (localStorage.getItem('darkMode') === 'enabled') {
+    document.body.classList.add('dark');
+    document.querySelector('.toggle-btn').textContent = '☀️ Light';
+  }
+
+ updatePriceTable();
+  fetchLiveRate();
+</script>
+</body>
+</html>
